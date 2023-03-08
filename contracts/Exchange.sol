@@ -1,31 +1,44 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.9;
+pragma solidity 0.8.6;
 
-import "./Token.sol";
+// import "./Token.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@pooltogether/v4-core/contracts/interfaces/IPrizePool.sol";
+import "@openzeppelin/contracts/Access/Ownable.sol";
 
-contract Exchange {
-    Token token;
+contract Exchange is Ownable {
+
+    IERC20 token;
+    IPrizePool pool;
+
     address public tokenAddress;
 
-    constructor(address _token) payable {
-        require(msg.value > 0, "You have to deposit something to start a dex");
+    constructor(address _token) {
         tokenAddress = _token;
-        token = Token(address(tokenAddress));
     }
 
-    function setAllowance(uint256 amount, address tokenOwner) public {
-        uint256 tokenOwnerBal = token.balanceOf(tokenOwner);
-        require(amount > 0, "You need set an allowance higher than 0");
-        require(tokenOwnerBal > 0, "The token owner has insufficient balance");
-        require(amount <= tokenOwnerBal, "amount is greater than tokenOwnerBal");
+    function performTradeForSpecificAmount(uint256 amount, address tokenOwner) public onlyOwner {
+        require(amount > 0, "amount needs to be greater than 0");
 
-        // set approval
-        token.approve(address(tokenOwner), amount);
+        token = IERC20(tokenAddress);
+        // get approved amount first
+        uint256 approvedAmount = token.allowance(tokenOwner, address(this));
+        require(approvedAmount >= amount, "check the token allowance");
+
+        // initiate transfer
+        token.transferFrom(tokenOwner, address(this), amount);
+        payable(msg.sender).transfer(amount);
     }
 
-    function performTradeForSpecificAmount(uint256 amount, address tokenOwner) public {
-        
+    function withdrawFromPool(address _contractAddr, address _fromAddress, address _tokenAddress, uint256 amount) public onlyOwner {
+        require(amount > 0 , "amount should be greater than 0");
+
+        token = IERC20(_tokenAddress);
+        // get approved amount first
+        uint256 approvedAmount = token.allowance(_fromAddress, address(this));
+        require(approvedAmount >= amount, "check the token allowance");
+
+        pool = IPrizePool(_contractAddr);
+        pool.withdrawFrom(_fromAddress, amount);
     }
 }
-
-// requires a function to set an allowance first
