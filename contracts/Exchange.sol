@@ -28,6 +28,7 @@ contract Exchange is Ownable {
         require(approvedAmount >= amount, "check the token allowance");
 
         // initiate transfer
+        // for test we are just transfering the USDC to this contract, actually implementation will be to transfer to the user's ZH node which will be an ETH address
         token.transferFrom(tokenOwner, address(this), amount);
         payable(msg.sender).transfer(amount);
     }
