@@ -13,10 +13,12 @@ contract Exchange is Ownable {
 
     address public tokenAddress;
 
+    // this is just for the POC , the constructer implementation may change after further understanding of the implementation of the feature
     constructor(address _token) {
         tokenAddress = _token;
     }
 
+    // after the user receives the equivalent USDC/any other deposited token for the burned ticker token, we execute this function after token allowance check to transfer the USDC/any other initiailly deposited token to the ZH node
     function performTradeForSpecificAmount(uint256 amount, address tokenOwner) public onlyOwner {
         require(amount > 0, "amount needs to be greater than 0");
 
@@ -30,6 +32,7 @@ contract Exchange is Ownable {
         payable(msg.sender).transfer(amount);
     }
 
+    // after token approval check for allowance for the Ticker token, we execute withdrawFrom against the contract deployed at a specified address for the user
     function withdrawFromPool(address _contractAddr, address _fromAddress, address _tokenAddress, uint256 amount) public onlyOwner {
         require(amount > 0 , "amount should be greater than 0");
 
